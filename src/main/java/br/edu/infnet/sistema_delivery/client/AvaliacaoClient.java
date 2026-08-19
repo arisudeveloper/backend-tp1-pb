@@ -1,4 +1,3 @@
-
 package br.edu.infnet.sistema_delivery.client;
 
 import br.edu.infnet.sistema_delivery.dto.AvaliacaoResponse;

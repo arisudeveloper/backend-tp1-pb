@@ -1,5 +1,7 @@
 package br.edu.infnet.sistema_delivery.controller;
 
+import br.edu.infnet.sistema_delivery.client.AvaliacaoClient;
+import br.edu.infnet.sistema_delivery.dto.AvaliacaoResponse;
 import br.edu.infnet.sistema_delivery.dto.RestauranteHistoricoResponse;
 import br.edu.infnet.sistema_delivery.dto.RestauranteRequest;
 import br.edu.infnet.sistema_delivery.dto.RestauranteResponse;
@@ -16,11 +18,14 @@ public class RestauranteController {
 
     private final RestauranteService restauranteService;
     private final HistoricoService historicoService;
+    private final AvaliacaoClient avaliacaoClient;
 
     public RestauranteController(RestauranteService restauranteService,
-                                 HistoricoService historicoService) {
+                                 HistoricoService historicoService,
+                                 AvaliacaoClient avaliacaoClient) {
         this.restauranteService = restauranteService;
         this.historicoService = historicoService;
+        this.avaliacaoClient = avaliacaoClient;
     }
 
     @GetMapping
@@ -42,5 +47,10 @@ public class RestauranteController {
     @GetMapping("/{id}/historico")
     public List<RestauranteHistoricoResponse> historico(@PathVariable Long id) {
         return historicoService.historicoDoRestaurante(id);
+    }
+
+    @GetMapping("/{id}/avaliacoes")
+    public List<AvaliacaoResponse> buscarAvaliacoes(@PathVariable Long id) {
+        return avaliacaoClient.buscarPorRestaurante(id);
     }
 }
