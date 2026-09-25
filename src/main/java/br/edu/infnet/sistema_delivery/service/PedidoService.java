@@ -1,5 +1,6 @@
 package br.edu.infnet.sistema_delivery.service;
 
+import br.edu.infnet.sistema_delivery.config.RabbitMQConfig;
 import br.edu.infnet.sistema_delivery.dto.*;
 import br.edu.infnet.sistema_delivery.model.ItemPedido;
 import br.edu.infnet.sistema_delivery.model.Pedido;
@@ -7,6 +8,7 @@ import br.edu.infnet.sistema_delivery.model.Restaurante;
 import br.edu.infnet.sistema_delivery.repository.PedidoRepository;
 import br.edu.infnet.sistema_delivery.repository.RestauranteRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +20,14 @@ public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
     private final RestauranteRepository restauranteRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     public PedidoService(PedidoRepository pedidoRepository,
-                         RestauranteRepository restauranteRepository) {
+                         RestauranteRepository restauranteRepository,
+                         RabbitTemplate rabbitTemplate) {
         this.pedidoRepository = pedidoRepository;
         this.restauranteRepository = restauranteRepository;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +59,19 @@ public class PedidoService {
         pedido.calcularValorTotal();
 
         Pedido pedidoSalvo = pedidoRepository.save(pedido);
+
+        PedidoCriadoEvent event = new PedidoCriadoEvent(
+                pedidoSalvo.getId(),
+                pedidoSalvo.getRestaurante().getId(),
+                pedidoSalvo.getValorTotal()
+        );
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_PEDIDOS,
+                RabbitMQConfig.ROUTING_KEY_PEDIDO_CRIADO,
+                event
+        );
+
         return transformarEmResponse(pedidoSalvo);
     }
 
